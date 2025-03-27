@@ -1,5 +1,6 @@
 package com.joaozao.AgregadorInvestimentos.controller;
 
+import com.joaozao.AgregadorInvestimentos.dto.CreateAccountDto;
 import com.joaozao.AgregadorInvestimentos.dto.CreateUserDto;
 import com.joaozao.AgregadorInvestimentos.dto.UpdateUserDto;
 import com.joaozao.AgregadorInvestimentos.model.User;
@@ -56,6 +57,14 @@ public class UserController {
     public ResponseEntity<Void> deleteById(@PathVariable ("userId") String userId) {
         userService.deleteById(userId);
         return ResponseEntity.noContent().build(); //retorna nada e só builda o usuário
+    }
+
+
+    @PostMapping ("/{userId}/account")
+    public ResponseEntity<Void> createAccount(@PathVariable ("userId") String userId, @RequestBody CreateAccountDto createAccountDto) {
+        userService.createAccount(userId,createAccountDto);
+        return ResponseEntity.ok().build();
+
     }
 
 }

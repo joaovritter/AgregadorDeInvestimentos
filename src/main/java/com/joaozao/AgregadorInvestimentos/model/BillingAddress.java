@@ -10,27 +10,28 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
-@Table(name = "tb_billingaddress")
+@Table(name = "tb_billing_address")
 public class BillingAddress {
-
     @Id
     @Column (name = "account_id")
     private UUID id;
 
-    @OneToOne
+    private String street;
+    private int number;
+
+
+    @OneToOne (cascade = CascadeType.ALL)//um billing address tem uma account
     @MapsId //pega id da entidade account e salva como id da entidade BillingAddress
     @JoinColumn (name = "account_id")
     private Account account;
-    private String street;
-    private String number;
 
     public BillingAddress() {
-
     }
 
-    public BillingAddress(Account account, String street, String number) {
-        this.account = account;
+    public BillingAddress(UUID id, String street, int number, Account account) {
+        this.id = id;
         this.street = street;
         this.number = number;
+        this.account = account;
     }
 }
