@@ -1,5 +1,6 @@
 package com.joaozao.AgregadorInvestimentos.controller;
 
+import com.joaozao.AgregadorInvestimentos.dto.AccountResponseDto;
 import com.joaozao.AgregadorInvestimentos.dto.CreateAccountDto;
 import com.joaozao.AgregadorInvestimentos.dto.CreateUserDto;
 import com.joaozao.AgregadorInvestimentos.dto.UpdateUserDto;
@@ -29,6 +30,7 @@ public class UserController {
         var userId = userService.createUser(createUserDto);
         return ResponseEntity.created(URI.create("/v1/users/" + userId.toString())).build();
     }
+
 
     @GetMapping ("/{userId}")
     public ResponseEntity<User> getUserById(@PathVariable ("userId") String userId) {
@@ -60,11 +62,23 @@ public class UserController {
     }
 
 
-    @PostMapping ("/{userId}/account")
+    @PostMapping ("/accounts/{userId}")
     public ResponseEntity<Void> createAccount(@PathVariable ("userId") String userId, @RequestBody CreateAccountDto createAccountDto) {
         userService.createAccount(userId,createAccountDto);
         return ResponseEntity.ok().build();
+    }
 
+    /**
+     * Endpoint para listar contas de um usuário
+     * Retorna um List<AccountResponseDto> para evitar expor diretamente a entidade Account
+     * O DTO permite controlar exatamente quais informações são expostas
+     * AccountResponseDto serve para enviar dados formatados corretamente na resposta
+     */
+
+    @GetMapping ("/accounts/{userId}")
+    public ResponseEntity<List<AccountResponseDto>> listAccounts (@PathVariable ("userId") String userId) {
+       var accounts = userService.listAccounts(userId);
+        return ResponseEntity.ok(accounts);
     }
 
 }

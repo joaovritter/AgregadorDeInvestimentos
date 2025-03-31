@@ -34,18 +34,19 @@ public class User {
     private Instant updateTimestamp;
 
     @OneToMany (mappedBy = "user") //um usuario tem varias contas
-    private List<Account> listAccounts;
+    private List<Account> accounts;
 
     public User() {
 
     }
 
-    public User(UUID userId, String username, String email, String password, Instant creationTimestamp, Instant updateTimestamp) {
+    public User(UUID userId, String username, String email, String password, Instant creationTimestamp, Instant updateTimestamp, List<Account> accounts) {
         this.userId = userId;
         this.username = username;
         this.email = email;
         this.password = password;
         this.creationTimestamp = creationTimestamp;
         this.updateTimestamp = updateTimestamp;
+        this.accounts = accounts;
     }
 }

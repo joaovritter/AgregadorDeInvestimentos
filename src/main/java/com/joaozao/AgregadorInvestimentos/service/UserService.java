@@ -1,5 +1,6 @@
 package com.joaozao.AgregadorInvestimentos.service;
 
+import com.joaozao.AgregadorInvestimentos.dto.AccountResponseDto;
 import com.joaozao.AgregadorInvestimentos.dto.CreateAccountDto;
 import com.joaozao.AgregadorInvestimentos.dto.CreateUserDto;
 import com.joaozao.AgregadorInvestimentos.dto.UpdateUserDto;
@@ -9,7 +10,6 @@ import com.joaozao.AgregadorInvestimentos.model.User;
 import com.joaozao.AgregadorInvestimentos.repository.AccountRepository;
 import com.joaozao.AgregadorInvestimentos.repository.BillingAddressRepository;
 import com.joaozao.AgregadorInvestimentos.repository.UserRepository;
-import org.hibernate.sql.Update;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import static java.util.Objects.isNull;
 
 @Service
 public class UserService {
@@ -34,13 +36,16 @@ public class UserService {
     }
 
     public UUID createUser(CreateUserDto createUserDto){
+       //DTO -> ENTITY
         var entity = new User(
                 null, //o banco gera o UUID automaticamente
                 createUserDto.username(),
                 createUserDto.email(),
                 createUserDto.password(),
                 Instant.now(),
-                null);
+                null,
+                null
+        );
         var userSaved = userRepository.save(entity);
         return userSaved.getUserId();
     }
@@ -69,7 +74,7 @@ public class UserService {
         }
     }
 
-    public void deleteById(@PathVariable("userId") String userId){
+    public void deleteById(String userId){
         var id = UUID.fromString(userId);
         var userExist = userRepository.existsById(id);
         if(userExist) {
@@ -79,24 +84,48 @@ public class UserService {
 
 
     public void createAccount(String userId, CreateAccountDto createAccountDto) {
+
         var user = userRepository.findById(UUID.fromString(userId))
-                   .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        //DTO -> Entity
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario não existe"));
+
+        // DTO -> ENTITY
         var account = new Account(
-                null,
+               null,
                 user,
-                createAccountDto.description(),
                 null,
-                new ArrayList<>()
+                createAccountDto.description(),
+               new ArrayList<>()
         );
-        var accountSaved = accountRepository.save(account);
+
+        var accountCreated = accountRepository.save(account);
 
         var billingAddress = new BillingAddress(
-                accountSaved.getAccountId(),
+                null,
+                account,
                 createAccountDto.street(),
-                createAccountDto.number(),
-                account
+                createAccountDto.number()
         );
+
         billingAddressRepository.save(billingAddress);
+    }
+
+    /**
+     * Retorna a lista de contas de um usuário, convertendo para DTO
+     * Isso impede a serialização infinita entre Account e User, dependência cíclica
+     * Aqui, o List<Account> é convertido em List<AccountResponseDto>, evitando expor o modelo Account.
+     * user.getAccounts() é a lista de contas do usuario
+     * stream().map(...).toList() para converter a lista para AccountResponseDto
+     * .stream(): Transforma a List<Account> em um fluxo de dados (Stream<Account>, permitindo manipular os elementos da lista de forma funcional e eficiente.
+     */
+    public List<AccountResponseDto> listAccounts(String userId) {
+        //busca o usuário
+        var user = userRepository.findById(UUID.fromString(userId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario não existe"));
+
+        return  user.getAccounts()// Retorna a lista de contas do usuário (List<Account>)
+                .stream() /// Converte a lista em um fluxo de dados (Stream<Account>)
+                .map(ac -> new AccountResponseDto(ac.getAccountId().toString(), ac.getDescription())) // Transforma Account em DTO, extraindo somente os dados necessarios (accountId e description)
+                .toList(); // Converte o Stream<AccountResponseDto> de volta para List<AccountResponseDto>
+
     }
 }
